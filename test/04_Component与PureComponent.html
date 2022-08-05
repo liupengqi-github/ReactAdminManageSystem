@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<div id="example"></div>
+
+<script type="text/javascript" src="./js/react.development.js"></script>
+<script type="text/javascript" src="./js/react-dom.development.js"></script>
+<script type="text/javascript" src="./js/babel.min.js"></script>
+
+<script type="text/babel">
+
+    /*
+       1. Component 存在的问题？
+         ①: 父组件重新 render(), 当前组件也会重新执行 render(), 即使没有任何变化
+         ②: 当前组件 setState(), 重新执行 render(), 即使 state 没有任何变化
+       2. 解决 Component 存在的问题
+         ①原因：组件的 componentShouldUpdate() 默认返回 true, 即使数据没有变化 render() 都会重新执行
+         ②办法1：重写 shouldComponentUpdate(), 判断如果数据有变化返回 true, 否则返回 false
+         ③办法2: 使用 pureComponent 代替 Component
+         ④说明: 一般都使用 PureComponent 来优化组件性能
+       3. PureComponent 的基本原理
+          ①重写实现 shouldComponentUpdate()
+          ②对组件的新/旧 state 和 props 中的数据进行浅比较，如果都没有变化，返回 false，否则返回 true
+          ③一旦 componentShouldUpdate 返回 false 不再执行用于更新的 render()
+    */
+
+    class A extends React.Component {
+        state = {
+            m1: { count: 1 }
+        }
+
+        test1 = () => {
+            // this.setState(state => ({
+            //     m1: { count: state.m1.count + 1 }
+            // }))
+
+            // const m1 = this.state.m1
+            // m1.count = 2
+            // // this.setState({ m1 })
+            // // 上面的写法有问题，我们下面的写法是重新创建了一个对象，是可以走到 shouldComponentUpdate 里面的判断的
+            // this.setState({ m1: { ...m1 } })
+
+            this.setState({})
+        }
+
+        render() {
+            console.log('A render()');
+            return (
+                <div>
+                    <h1>A组件: m1={ this.state.m1.count }</h1>
+                    <button onClick={ this.test1 }>A 测试 1</button>
+                    <B m1={ this.state.m1 }></B>
+                </div>
+            );
+        }
+    }
+
+    class B extends React.PureComponent {
+        state = {
+            m2: 1
+        }
+
+        test2 = () => {
+            this.setState({})
+        }
+
+        /*
+            用来决定当前组件是否应该重新 render(), 如果返回 true，就会去重新 render()， 否则结束
+        */
+        // shouldComponentUpdate(nextProps, nextState, nextContext) {
+        //     console.log('shouldComponentUpdate');
+        //     // 比较新旧的 props 中的 和 state 中的数据，如果没有一个变化的返回 false, 否则 true（这样写就定死了，如果修改了其他属性，这样就判断不到，只能通过循环遍历了吧）
+        //     if (this.props.m1 === nextProps.m1 && this.state.m2 === nextState.m2) {
+        //         return  false
+        //     } else {
+        //         return true
+        //     }
+        //
+        //     // Component 中的默认值为 true
+        //     // return true
+        // }
+
+        render() {
+            console.log('B render()');
+            return (
+                <div>
+                    <h1>B组件: m2={ this.state.m2 }, m1={ this.props.m1.count }</h1>
+                    <button onClick={ this.test2 }>B 测试 2</button>
+                </div>
+            );
+        }
+    }
+
+    ReactDOM.render(<A></A>, document.getElementById('example'))
+</script>
+
+</body>
+</html>
